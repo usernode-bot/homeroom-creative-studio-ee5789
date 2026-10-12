@@ -133,11 +133,11 @@ function loadingEl(label) {
   return d;
 }
 
-function errorEl(msg, retry) {
+function errorEl(msg, retry, note = 'Your tools and templates still work.') {
   const d = document.createElement('div');
   d.className = 'state-error';
   d.innerHTML = `<p class="text-body font-medium">${msg}</p>
-    <p class="text-small text-muted">Your tools and templates still work.</p>`;
+    <p class="text-small text-muted">${note}</p>`;
   const b = document.createElement('button');
   b.className = 'btn-secondary mt-2'; b.textContent = 'Retry';
   b.addEventListener('click', retry);
@@ -150,14 +150,12 @@ let homeCache = null;
 async function renderHome() {
   if (homeCache) { paintHome(homeCache); homeCache = null; }
   setState(loadingEl());
-  try {
-    const [pr, tr] = await Promise.all([api('/api/projects'), api('/api/templates')]);
-    homeCache = { projects: pr.projects || [], templates: tr.templates || [] };
-    paintHome(homeCache);
-    if (IS_GUEST) api('/api/capabilities').then((c) => { capabilities = c; }).catch(() => {});
-  } catch (err) {
-    setState(errorEl("Couldn't load your projects.", renderHome));
-  }
+  const [pr, tr] = await Promise.allSettled([api('/api/projects'), api('/api/templates')]);
+  const projects = pr.status === 'fulfilled' ? pr.value.projects || [] : null;
+  const templates = tr.status === 'fulfilled' ? tr.value.templates || [] : null;
+  if (projects !== null && templates !== null) homeCache = { projects, templates };
+  paintHome({ projects, templates });
+  if (IS_GUEST && projects) api('/api/capabilities').then((c) => { capabilities = c; }).catch(() => {});
 }
 
 function paintHome({ projects, templates }) {
@@ -172,7 +170,10 @@ function paintHome({ projects, templates }) {
   }
 
   // Continue card + history filmstrip
-  const recent = projects[0];
+  if (projects === null) {
+    d.append(errorEl('Projects could not be loaded.', renderHome));
+  }
+  const recent = projects ? projects[0] : undefined;
   if (recent) {
     const card = document.createElement('button');
     card.className = 'card flex w-full items-center gap-3 text-left';
@@ -205,7 +206,7 @@ function paintHome({ projects, templates }) {
       strip.append(f);
     }
     d.append(strip);
-  } else {
+  } else if (projects !== null) {
     const empty = document.createElement('div');
     empty.className = 'state-empty rounded-xl border border-line bg-surface';
     empty.innerHTML = `<p class="text-body font-medium">No projects yet</p>
@@ -218,7 +219,7 @@ function paintHome({ projects, templates }) {
   }
 
   // Recent projects
-  if (projects.length) {
+  if (projects && projects.length) {
     d.append(sectionLabel('Recent projects'));
     const row = document.createElement('div');
     row.className = '-mx-4 flex gap-3 overflow-x-auto px-4 pb-1';
@@ -282,7 +283,9 @@ function paintHome({ projects, templates }) {
   }
 
   // Templates shelf
-  if (templates.length) {
+  if (templates === null) {
+    d.append(errorEl('Templates could not be loaded.', renderHome));
+  } else if (templates.length) {
     d.append(sectionLabel('Your templates'));
     const row = document.createElement('div');
     row.className = '-mx-4 flex gap-3 overflow-x-auto px-4 pb-1';
@@ -344,7 +347,7 @@ async function renderProjects() {
   setState(loadingEl());
   let data;
   try { data = await api('/api/projects'); } catch {
-    return setState(errorEl("Couldn't load your projects.", renderProjects));
+    return setState(errorEl('Projects could not be loaded.', renderProjects));
   }
   const d = document.createElement('div');
   d.className = 'flex flex-col gap-3';
@@ -370,6 +373,7 @@ async function renderProjects() {
 
 function projectTile(p) {
   const t = document.createElement('div');
+  t.dataset.projectTile = '';
   t.className = 'flex flex-col';
   const box = document.createElement('button');
   box.className = 'relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl border border-line bg-stage';
@@ -460,10 +464,8 @@ function templateTile(t, opts) {
 
 async function renderTemplates() {
   setState(loadingEl());
-  let data;
-  try { data = await api('/api/templates'); } catch {
-    return setState(errorEl("Couldn't load your templates.", renderTemplates));
-  }
+  let data = null;
+  try { data = await api('/api/templates'); } catch { data = null; }
   const d = document.createElement('div');
   d.className = 'flex flex-col gap-3';
   d.append(sectionLabel('Starter templates'));
@@ -479,7 +481,10 @@ async function renderTemplates() {
   });
   d.append(grid);
   d.append(sectionLabel('My templates'));
-  if (!data.templates.length) {
+  if (data === null) {
+    d.append(errorEl('Your templates could not be loaded.', renderTemplates,
+      'The starter templates above still work.'));
+  } else if (!data.templates.length) {
     const empty = document.createElement('div');
     empty.className = 'state-empty rounded-xl border border-line bg-surface';
     empty.innerHTML = `<p class="text-small text-muted">Save a project as a template and it will be here.</p>`;

@@ -262,7 +262,7 @@ async function ensureDemo(user) {
 }
 
 const RECENT_HISTORY = `COALESCE((
-  SELECT json_agg(x ORDER BY x.ord) FROM (
+  SELECT json_agg(x ORDER BY x.ord)::jsonb FROM (
     SELECT e->>'kind' AS kind, e->>'label' AS label, ord
     FROM jsonb_array_elements(history) WITH ORDINALITY AS t(e, ord)
     LIMIT 8
@@ -325,7 +325,10 @@ function ownRow(table) {
       const r = await pool.query(
         `SELECT * FROM ${table} WHERE id = $1 AND owner_id = $2`,
         [req.params.id, req.user.id]);
-      if (!r.rows.length) return res.status(404).json({ error: 'not_found' });
+      if (!r.rows.length) {
+        res.status(404).json({ error: 'not_found' });
+        return undefined; // response already sent; callers check for undefined
+      }
       return r.rows[0];
     } catch (err) {
       if (err.message.includes('invalid input syntax')) {
@@ -552,6 +555,14 @@ app.post('/api/ai/text', async (req, res) => {
     console.warn('ai text failed: ' + err.message);
     return res.status(502).json({ code: 'ai_failed', usage: null });
   }
+});
+
+// Last-resort error handler: a handler that throws (or answers twice) must
+// never take the whole process down with it.
+app.use((err, req, res, _next) => {
+  if (res.headersSent) return;
+  console.error('unhandled route error: ' + (err && err.message));
+  res.status(500).json({ error: 'server_error' });
 });
 
 // ── Static shell ─────────────────────────────────────────────────────────
