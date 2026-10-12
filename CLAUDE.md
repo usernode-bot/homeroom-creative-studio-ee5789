@@ -97,24 +97,31 @@ tables you've marked private), etc.
 
 ## About Homeroom Creative Studio
 
-One creative studio for AI images, edits and marketing assets
-
-_(add a sentence or two more of product context here so Claude Code has a
-shared understanding of what this app is for)_
+One creative studio for AI images, edits and marketing assets: a person
+starts from a photo, a blank size or a starter layout, edits it on a
+canvas (crop, light, filters, text, layers), and exports finished
+graphics without watermarks. AI text ideas run through the platform's
+LLM proxy; AI image tools stay honestly listed as Unavailable until a
+real backend exists.
 
 ## Design
 
 This app's look. The first real version fills in the blanks; every later
 change follows it, and updates it when a request changes the look on purpose.
 
-- **Palette:** _(name the accent, any second colour and the neutrals, e.g.
-  "accent: tomato red; second: basil green; neutrals: warm greys")_
-- **Signature element:** _(the one thing on screen drawn from this app's
-  subject, which no other app would have)_
+- **Palette:** cool studio greys on `bg-ground`/`bg-surface`; the one
+  accent is ink (near-black in light, near-white in dark) for primary
+  actions; the tool categories carry printer's CMY — cyan for Edit,
+  magenta for Design, yellow for AI tools — used only on tool tiles and
+  their labels.
+- **Signature element:** the history filmstrip (dark strip with
+  sprocket holes, in both looks) that shows every step of a project and
+  lets you jump back to any of them, plus the printer's crop marks at
+  the canvas corners and the CMY ring mark in the header.
 - **Type scale:** `text-title`, `text-heading`, `text-body`, `text-small`
-  _(change their sizes in `tailwind.config.js` if you must, not their number)_
-- **One fixed look:** _(only for an app drawn as its own scene, such as a
-  game: which look, and why. Otherwise delete this line.)_
+  (unchanged from the kit).
+- The app keeps both looks; there is no theme picker — the viewer's
+  Homeroom setting is the control.
 
 The kit is in `styles/tailwind-input.css`: colour tokens with a light and
 a dark value (named in `tailwind.config.js`), and a few components
@@ -139,6 +146,13 @@ Re-theme by changing the token values there, keeping every text pair at
 
 ## App-specific conventions
 
-_(optional — e.g. "all currency values stored as integer cents, not
-floats"; "the `posts` table is append-only"; "avoid adding new
-dependencies"; etc.)_
+- Docs carry no pixels. A project doc is `{v:1, width, height,
+  background, assets, layers}`; assets reference platform files
+  (`/app-files/<32 hex>` via the `/api/image` proxy) or demo keys.
+  Everything visual is recomputed client-side in `render.js`.
+- `is_demo` rows are staging-only furniture: they never mix into a real
+  account's list unless `?demo=1` asks for them.
+- Adding a tool means one entry in `public/js/tools.js` plus whatever
+  server route it needs; the Home list and the editor both read the
+  registry, and every AI tool must be `ready`, `preview_off` or
+  honestly `unavailable` — never faked.

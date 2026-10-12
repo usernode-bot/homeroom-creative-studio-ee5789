@@ -1,27 +1,48 @@
 # Homeroom Creative Studio
 
-> **Starter template** — this repo was scaffolded by Homeroom Social
-> Vibecoding. Everything in it is placeholder example code until the
-> app's first real feature is built.
+One creative studio for AI images, edits and marketing assets, built on
+Homeroom. Projects are documents, not pixels: each project stores layer
+geometry, light/colour settings and asset references, and the browser
+renders the pixels on a canvas. That keeps saves tiny and every edit
+reversible.
 
-The scaffold is a small working demo that proves the plumbing works:
+## What it does
 
-- **Sign-in** — the server verifies the platform-issued user token
-  (an RS256 JWT) on every request, so the app already knows who is
-  using it. No accounts to build.
-- **Database** — the app has its own private Postgres database, ready
-  to store things.
-- **Styling** — Tailwind CSS, precompiled by `npm run build` during
-  image creation with either Kubernetes/Paketo or standalone Docker, in a
-  light and a dark look that follow the viewer's Homeroom theme.
+- **Home** — a Continue card with a history filmstrip, recent projects,
+  the tools list (Edit / Design / AI tools) and a templates shelf.
+- **Canvas editor** — crop, rotate & flip, straighten, light & colour
+  adjustments with Auto fix, eight filters with intensity, text in five
+  styles, layers (photo / shape, reorder, opacity, duplicate), resize,
+  a history filmstrip with undo/redo and jump-to-step, autosave and an
+  export sheet (PNG / JPEG / WebP, 1x / 2x / custom size, no watermark).
+- **AI text ideas** — headlines, captions and taglines from the
+  platform's LLM proxy, billed to the person's own AI budget. AI image
+  tools are listed but honestly marked Unavailable; they are never faked.
 
-## Replacing the template
+## Running
 
-To change this app, ask Homeroom bot: open the app on Homeroom, tap the
-Homeroom icon in the header, then **Suggest an improvement**, and describe
-the app you want in plain English. The template will be replaced with your
-real app. You can also run
-Claude Code against this repo directly; start with `CLAUDE.md`, which
-carries the app-specific notes and points at the platform rules.
+```sh
+npm install
+npm run build   # compiles Tailwind CSS into public/tailwind.css
+npm start
+```
 
-Once the real app exists, rewrite this README to describe it.
+In staging, open the app with `?demo=1` to seed six demo projects and
+two saved templates (idempotent, obviously fake, procedural artwork).
+
+## How it fits together
+
+- `server.js` — Express + Postgres. Projects and templates are private
+  per account. `/api/image` is a same-origin proxy for platform files,
+  `/api/ai/text` proxies the platform LLM, `/api/capabilities` reports
+  what is switched on. Docs are validated server-side (size, layer and
+  asset limits) before they are stored.
+- `public/js/` — the app: `app.js` (home/projects/templates, routing,
+  photo intake), `editor.js` (canvas editor), `render.js` (pixel
+  pipeline), `formats.js` (sizes and starter layouts), `tools.js`
+  (tool registry), `ai-text.js` (AI text sheet).
+- `styles/tailwind-input.css` + `tailwind.config.js` — the design kit.
+  Colour only ever comes from tokens; both light and dark looks are
+  required.
+
+See `CLAUDE.md` for the app's design language and conventions.

@@ -6,5 +6,46 @@
   "secrets": [],
   "governance": {
     "preset": "you_or_the_group"
-  }
+  },
+  "llm": {
+    "purpose": "Writes headline, caption and tagline ideas for your graphics",
+    "suggested_daily_cap_cents": 50
+  },
+  "tests": [
+    {
+      "name": "home.demo",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/?demo=1",
+      "expectSelector": "[data-filmstrip]"
+    },
+    {
+      "name": "home.empty",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/",
+      "expectText": "No projects yet"
+    },
+    {
+      "name": "projects.tab",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/?demo=1#/projects",
+      "expectSelector": "[data-project-tile]"
+    },
+    {
+      "name": "templates.tab",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/?demo=1#/templates",
+      "expectText": "Starter templates"
+    },
+    {
+      "name": "editor.canvas",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/#/edit/new/yt-bold",
+      "expectSelector": "canvas[data-editor-canvas]"
+    }
+  ]
 }

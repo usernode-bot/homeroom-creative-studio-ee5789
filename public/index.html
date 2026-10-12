@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
   <script>
   // usernode-dev-console@1
   (function () {
@@ -26,8 +26,7 @@
             if (seen.has(val)) return '[Circular]';
             seen.add(val);
           }
-          if (typeof val === 'function') return '[Function ' + (val.name || 'anonymous') + ']';
-          if (val instanceof Error) return val.stack || (val.name + ': ' + val.message);
+          if (typeof val === 'function') return val.stack || (val.name + ': ' + val.message);
           return val;
         });
       } catch (e) { try { return String(v); } catch (_) { return '[unserializable]'; } }
@@ -64,35 +63,11 @@
   })();
   </script>
   <title>Homeroom Creative Studio</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%237c3aed'/><circle cx='50' cy='50' r='18' fill='white'/></svg>">
-  <!-- Tailwind, PRECOMPILED for this app (was cdn.tailwindcss.com's
-       in-browser engine plus an inline tailwind.config here). The config
-       moved to tailwind.config.js in the repo root; npm run build compiles
-       it to public/tailwind.css with Docker or Paketo on every image build, so the
-       stylesheet is regenerated from THIS commit's markup every deploy and
-       can never drift behind the code. ~7 KB of CSS instead of a ~400 KB
-       engine, and no flash of unstyled content.
-       Writing class names as whole literals is what keeps this working — a
-       class assembled from fragments at runtime (e.g. "bg-" + tone + "-500")
-       is invisible to the compiler. If you genuinely need runtime-generated
-       classes, swap this link for the platform-hosted engine instead:
-       <script src="/usernode-tailwind/v1/tailwind.js"></script> -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='9' cy='9' r='5.5' fill='%2300aaa8'/><circle cx='15' cy='9' r='5.5' fill='%23c41670'/><circle cx='12' cy='15' r='5.5' fill='%23ffd43b' fill-opacity='0.9'/></svg>">
   <link rel="stylesheet" href="/tailwind.css">
-  <!-- The platform bridge, centrally hosted and loaded by RELATIVE path (the
-       handler in server.js serves it under a plain "node server.js"; the
-       platform's edge answers it everywhere else). Never vendor it and never
-       write a hostname in front of it.
-       It is NOT conditional on this app calling a bridge API: it is also how
-       the app ANSWERS the shell, so a scaffold without it is invisible to
-       anything that asks the frame a question. Offline launch is one of those.
-       Another is the page's colour: the bridge reports this document's opaque
-       ground to the shell (#1581), which is what makes the platform bar above
-       the app take the app's tone instead of the viewer's theme (#1945).
-       The bridge is also where the app learns the viewer's light/dark theme:
-       the script below reads it. -->
+  <link rel="stylesheet" href="/usernode-native/v1/native.css">
   <script src="/usernode-bridge/v1/bridge.js"></script>
-  <!-- Follow the viewer's Homeroom theme (the bridge reports it), with the
-       OS preference as the fallback outside Homeroom. -->
+  <script src="/usernode-native/v1/native.js"></script>
   <script>
     (function () {
       var media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -108,28 +83,37 @@
   </script>
 </head>
 <body class="min-h-screen bg-ground text-fg">
-  <!-- Built from the design kit in styles/tailwind-input.css: colour tokens
-       that are right in both looks, and components for buttons, fields,
-       lists, cards and data states. The real app keeps the kit; CLAUDE.md's
-       "## Design" says how. -->
-  <!-- (Named in prose on purpose: Tailwind compiles any class-name word in
-       these files, comments included, and the starter should ship only the
-       components its screen uses.) -->
-  <main class="mx-auto flex max-w-md flex-col gap-8 px-4 py-10">
+  <div class="mx-auto flex min-h-screen w-full max-w-3xl flex-col">
+    <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-ground/95 px-4 py-3 backdrop-blur">
+      <svg viewBox="0 0 24 24" class="h-7 w-7 flex-none" aria-hidden="true">
+        <circle cx="9" cy="9" r="5.5" class="fill-cyan" fill-opacity="0.85"/>
+        <circle cx="15" cy="9" r="5.5" class="fill-magenta" fill-opacity="0.85"/>
+        <circle cx="12" cy="15" r="5.5" class="fill-yellow" fill-opacity="0.85"/>
+      </svg>
+      <h1 class="flex-1 text-heading">Studio</h1>
+      <button data-new-project class="btn-primary text-small">New project</button>
+    </header>
 
-    <!-- usernode-starter-notice@1 — starter-template messaging. When building
-         the user's real app, replace this whole screen and delete this block,
-         both sentinel comments included. -->
-    <section class="card flex flex-col items-start gap-3">
-      <div class="flex h-20 w-20 items-center justify-center rounded-2xl border border-line bg-ground text-title">🎨</div>
-      <span class="rounded-full bg-raised px-3 py-1 text-small font-medium text-muted">Starter template</span>
-      <h1 class="text-title">Homeroom Creative Studio</h1>
-      <p class="text-body text-muted">Welcome to your new app! Everything on this screen is placeholder content that came with it.</p>
-      <p class="text-body text-muted">To change this app, ask Homeroom bot: tap the <strong class="font-semibold text-fg">Homeroom icon</strong>, then <strong class="font-semibold text-fg">Suggest an improvement</strong>. Describe what you'd like in plain English, and it will be turned into your real app.</p>
-    </section>
-    <!-- /usernode-starter-notice@1 -->
+    <main data-view class="flex-1 px-4 pb-24 pt-4"></main>
 
-    <p class="text-center text-small text-muted">Built on Homeroom. This template screen disappears once you build your real app.</p>
-  </main>
+    <nav data-tabbar
+      class="fixed inset-x-0 bottom-0 z-30 mx-auto flex w-full max-w-3xl border-t border-line bg-surface un-safe-bottom">
+      <button data-tab="home" class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-small text-muted">
+        Home</button>
+      <button data-tab="projects" class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-small text-muted">
+        Projects</button>
+      <button data-tab="templates" class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-small text-muted">
+        Templates</button>
+    </nav>
+  </div>
+
+  <input type="file" accept="image/*" data-file-input class="hidden">
+  <div data-sheet-root></div>
+  <div data-toast class="pointer-events-none fixed left-1/2 top-3 z-50 -translate-x-1/2 rounded-lg bg-accent px-4 py-2 text-small text-on-accent opacity-0 transition-opacity"></div>
+
+  <script type="module" src="/js/render.js"></script>
+  <script type="module" src="/js/formats.js"></script>
+  <script type="module" src="/js/tools.js"></script>
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>
