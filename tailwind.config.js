@@ -55,13 +55,23 @@ module.exports = {
         danger: token('danger'),
         'on-danger': token('on-danger'),
         focus: token('focus'), // the keyboard focus ring
+        stage: token('stage'), // the grey behind the canvas
+        film: token('film'), // the history filmstrip (dark in both looks)
+        'film-frame': token('film-frame'),
+        'on-film': token('on-film'),
+        cyan: token('cyan'), // Edit tools
+        magenta: token('magenta'), // Design tools
+        yellow: token('yellow'), // AI tools
       },
       // The type scale: four sizes, and nothing in between.
       fontSize: {
         small: ['0.875rem', { lineHeight: '1.25rem' }],
         body: ['1rem', { lineHeight: '1.5rem' }],
         heading: ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
-        title: ['1.75rem', { lineHeight: '2.25rem', fontWeight: '700' }],
+        title: ['1.75rem', { lineHeight: '2.25rem', fontWeight: '700', letterSpacing: '-0.02em' }],
+      },
+      fontFamily: {
+        sans: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
     },
   },
