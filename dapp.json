@@ -1,0 +1,10 @@
+{
+  "description": "One creative studio for AI images, edits and marketing assets",
+  "icon": {
+    "emoji": "🎨"
+  },
+  "secrets": [],
+  "governance": {
+    "preset": "you_or_the_group"
+  }
+}

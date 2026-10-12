@@ -1,0 +1,15 @@
+{
+  "note": "The featured card this app's creator was shown while it was being made: its emoji (also the app's icon, set in dapp.json), a tagline and a few points that sum up the description in a few words. It is a picture of the idea, not a design: it shows no screen and sets no layout, words or colours. Build from the description in the first version's request; where the two differ, the description wins.",
+  "kind": "featured-card",
+  "emoji": "🎨",
+  "tagline": "One creative studio for AI images, edits and marketing assets",
+  "points": [
+    "Generate, edit and restore images in one workspace",
+    "Make thumbnails, posters, logos and social graphics",
+    "Crop, filter, add text and layers with undo and redo",
+    "Export high-quality files with shared templates"
+  ],
+  "source": "model",
+  "model": "claude-haiku-5-5",
+  "createdAt": "2026-10-12T17:22:05.786Z"
+}
