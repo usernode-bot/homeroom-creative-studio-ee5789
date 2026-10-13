@@ -85,6 +85,10 @@ async function openNewPhoto(name) {
     filter: { name: 'Original', amount: 0 },
   }];
   start(null, name || 'Photo', null, d, [{ kind: 'photo', label: 'Photo', doc: clone(d) }], 0);
+  // An uploaded photo is already a project: save it now rather than waiting
+  // for the first edit. A blob photo is saved by pendingBlobUpload instead.
+  markDirty();
+  scheduleSave();
   if (asset.pendingUpload) pendingBlobUpload(asset);
 }
 
