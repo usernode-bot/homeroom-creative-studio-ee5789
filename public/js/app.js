@@ -584,7 +584,8 @@ window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) usePhotoFile(f); });
 
 async function usePhotoFile(file) {
-  if (!/^image\//.test(file.type)) {
+  // Some gallery providers report no type at all; let the decoder decide then.
+  if (file.type && !/^image\//.test(file.type)) {
     toast("This file can't be opened. Try a JPEG, PNG or WebP.");
     return;
   }
@@ -596,27 +597,39 @@ async function usePhotoFile(file) {
   let w = bmp.width, h = bmp.height;
   const k = Math.min(1, MAX / Math.max(w, h));
   w = Math.max(16, Math.round(w * k)); h = Math.max(16, Math.round(h * k));
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  // On a low-memory phone a big canvas can fail to draw or encode (toBlob
+  // then hands back null); say so instead of leaving "Preparing photo…" up.
+  const encode = (cv, type, q) => new Promise((res, rej) =>
+    cv.toBlob((b) => (b ? res(b) : rej(new Error('encode_failed'))), type, q));
   const keepAlpha = file.type === 'image/png' || file.type === 'image/webp';
-  let blob = await new Promise((res) => c.toBlob(res, keepAlpha ? 'image/png' : 'image/jpeg', 0.9));
-  if (blob.size > 5 * 1024 * 1024) {
-    let q = 0.85, sw = w;
-    while (blob.size > 5 * 1024 * 1024 && q >= 0.5) {
-      blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', q));
-      if (blob.size > 5 * 1024 * 1024 && sw > 2048) {
-        sw = Math.round(sw * 0.7);
-        const c2 = document.createElement('canvas');
-        c2.width = sw; c2.height = Math.round(h * sw / w);
-        c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height);
-        blob = await new Promise((res) => c2.toBlob(res, 'image/jpeg', q));
-        c.width = c2.width; c.height = c2.height;
-        c.getContext('2d').drawImage(c2, 0, 0);
-        w = c2.width; h = c2.height;
+  let blob;
+  try {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    blob = await encode(c, keepAlpha ? 'image/png' : 'image/jpeg', 0.9);
+    if (blob.size > 5 * 1024 * 1024) {
+      let q = 0.85, sw = w;
+      while (blob.size > 5 * 1024 * 1024 && q >= 0.5) {
+        blob = await encode(c, 'image/jpeg', q);
+        if (blob.size > 5 * 1024 * 1024 && sw > 2048) {
+          sw = Math.round(sw * 0.7);
+          const c2 = document.createElement('canvas');
+          c2.width = sw; c2.height = Math.round(h * sw / w);
+          c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height);
+          blob = await encode(c2, 'image/jpeg', q);
+          c.width = c2.width; c.height = c2.height;
+          c.getContext('2d').drawImage(c2, 0, 0);
+          w = c2.width; h = c2.height;
+        }
+        q -= 0.1;
       }
-      q -= 0.1;
     }
+  } catch {
+    toast('This photo is too big for this phone to prepare. Try a smaller one.');
+    return;
+  } finally {
+    if (bmp.close) bmp.close();
   }
   if (blob.size > 5 * 1024 * 1024) {
     toast('That photo is too large even after shrinking. Try a smaller one.');
@@ -628,7 +641,10 @@ async function usePhotoFile(file) {
   let stored = null;
   if (window.usernode && usernode.uploadFile && TOKEN) {
     try {
-      stored = await usernode.uploadFile(blob, { visibility: 'public' });
+      // A named File, so the platform sees an extension that matches the bytes.
+      const ext = blob.type === 'image/png' ? '.png' : '.jpg';
+      const upload = new File([blob], name.slice(0, 80) + ext, { type: blob.type });
+      stored = await usernode.uploadFile(upload, { visibility: 'public' });
     } catch (e) {
       const code = e && (e.code || e.error);
       const msg = {
