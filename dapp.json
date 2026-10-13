@@ -1,6 +1,7 @@
 {
   "description": "One creative studio for AI images, edits and marketing assets",
   "icon": {
+    "image": "brand/icon.png",
     "emoji": "🎨"
   },
   "secrets": [],
