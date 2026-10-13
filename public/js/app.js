@@ -28,12 +28,52 @@ export function api(path, opts = {}) {
   });
 }
 
-export function toast(msg, ms = 2400) {
+export function toast(msg, ms = 2400, action) {
   const t = document.querySelector('[data-toast]');
-  t.textContent = msg;
+  t.textContent = msg; // also clears any button a previous action left behind
+  t.classList.toggle('pointer-events-auto', !!action);
+  if (action) {
+    t.classList.add('flex', 'items-center');
+    // min-h-11 keeps the 44 px tap target; -my-2 folds the extra height into
+    // the toast's own padding so the strip does not jump.
+    const btn = document.createElement('button');
+    btn.className = '-my-2 min-h-11 min-w-11 px-2 font-semibold underline text-on-accent';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => {
+      t.style.opacity = '0';
+      action.onClick();
+    });
+    t.append(btn);
+  } else {
+    t.classList.remove('flex', 'items-center');
+  }
   t.style.opacity = '1';
   clearTimeout(toast._t);
   toast._t = setTimeout(() => { t.style.opacity = '0'; }, ms);
+}
+
+// A refused upload's reason: the hosted bridge rejects with
+// new Error(data.error), so the code (if any) sits in e.message —
+// e.code / e.error are undefined on everything it throws.
+const UPLOAD_MESSAGES = {
+  file_too_large: 'That photo is too large. Try one under 5 MB.',
+  user_quota_exceeded: 'Your file storage is full. Delete something first.',
+  app_quota_exceeded: 'The app is out of file storage for now. Try again later.',
+  staging_quota_exceeded: 'This preview is out of file storage. Try again later.',
+  storage_unavailable: 'File storage is not available right now. Try again later.',
+  invalid_image: "This file can't be opened. Try a JPEG, PNG or WebP.",
+};
+
+export function uploadErrorText(e) {
+  const code = e && (e.code || e.error || e.message);
+  if (UPLOAD_MESSAGES[code]) return UPLOAD_MESSAGES[code];
+  const reason = e && typeof e.message === 'string' ? e.message.trim() : '';
+  if (reason) {
+    let text = 'The photo could not be uploaded: ' + reason.slice(0, 120);
+    if (!/[.!?…]$/.test(text)) text += '.';
+    return text;
+  }
+  return 'The photo could not be uploaded. Try again.';
 }
 
 // ── Sheets ───────────────────────────────────────────────────────────────
@@ -78,7 +118,7 @@ export const ctx = {
 
 // ── Router ───────────────────────────────────────────────────────────────
 const routes = [];
-const helpers = { api, toast, openSheet, timeAgo, params, TOKEN, DEMO, renderCurrent, pickPhoto, ctx };
+const helpers = { api, toast, openSheet, timeAgo, params, TOKEN, DEMO, renderCurrent, pickPhoto, ctx, uploadErrorText };
 helpers.routes = routes; // editor.js registers its #/edit/... routes here
 
 // ── Tool icons (inline SVG, no emoji) ────────────────────────────────────
@@ -636,6 +676,12 @@ async function usePhotoFile(file) {
     return;
   }
   const name = file.name.replace(/\.[^.]+$/, '') || 'Photo';
+  await uploadPrepared(blob, name, w, h);
+}
+
+// From the prepared blob on: encode and decode are done, so a Retry can call
+// this again with the very same bytes — no re-pick, no second decode.
+async function uploadPrepared(blob, name, w, h) {
   // Try to store it in the platform first; a blob: URL is only a stopgap and
   // is never saved to a project.
   let stored = null;
@@ -646,16 +692,14 @@ async function usePhotoFile(file) {
       const upload = new File([blob], name.slice(0, 80) + ext, { type: blob.type });
       stored = await usernode.uploadFile(upload, { visibility: 'public' });
     } catch (e) {
-      const code = e && (e.code || e.error);
-      const msg = {
-        file_too_large: 'That photo is too large. Try one under 5 MB.',
-        user_quota_exceeded: 'Your file storage is full. Delete something first.',
-        app_quota_exceeded: 'The app is out of file storage for now. Try again later.',
-        staging_quota_exceeded: 'This preview is out of file storage. Try again later.',
-        storage_unavailable: 'File storage is not available right now. Try again later.',
-        invalid_image: "This file can't be opened. Try a JPEG, PNG or WebP.",
-      }[code];
-      toast(msg || 'The photo could not be uploaded. Try again.');
+      console.error('[studio] photo upload failed', e);
+      toast(uploadErrorText(e), 10000, {
+        label: 'Retry',
+        onClick: () => {
+          toast('Uploading photo…');
+          uploadPrepared(blob, name, w, h);
+        },
+      });
       return;
     }
   }

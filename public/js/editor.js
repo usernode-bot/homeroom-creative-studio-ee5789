@@ -101,7 +101,20 @@ async function pendingBlobUpload(asset) {
     markDirty();
     scheduleSave();
   } catch (e) {
-    A.toast('The photo could not be uploaded. Try again.');
+    console.error('[studio] photo upload failed', e);
+    // Same offer as the Home path; outside Homeroom there is nothing to
+    // retry against, so the plain line stays.
+    if (window.usernode && window.usernode.uploadFile) {
+      A.toast(A.uploadErrorText(e), 10000, {
+        label: 'Retry',
+        onClick: () => {
+          A.toast('Uploading photo…');
+          pendingBlobUpload(asset);
+        },
+      });
+    } else {
+      A.toast('The photo could not be uploaded. Try again.');
+    }
   }
 }
 
