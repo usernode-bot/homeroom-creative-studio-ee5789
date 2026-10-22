@@ -368,16 +368,19 @@ function thumbImg(row, px) {
   img.width = px; img.height = px;
   img.className = 'h-full w-full object-cover';
   if (row.thumb_url) { img.src = row.thumb_url; return img; }
+  const draw = async (doc) => {
+    const assets = await loadAssets(doc.assets);
+    const c = document.createElement('canvas');
+    renderDoc(doc, c, { scale: Math.min(px * 2 / doc.width, px * 2 / doc.height), assets });
+    img.src = c.toDataURL('image/png');
+  };
+  if (row.doc) { draw(row.doc); return img; } // template rows carry their doc in the list response
   img.src = thumbMemo.get('r' + row.id) || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
   const key = 'r' + row.id;
   api('/api/projects/' + row.id).then(async (p) => {
     if (!p.doc) return;
-    const assets = await loadAssets(p.doc.assets);
-    const c = document.createElement('canvas');
-    renderDoc(p.doc, c, { scale: Math.min(px * 2 / p.doc.width, px * 2 / p.doc.height), assets });
-    const url = c.toDataURL('image/png');
-    thumbMemo.set(key, url);
-    img.src = url;
+    await draw(p.doc);
+    thumbMemo.set(key, img.src);
   }).catch(() => {});
   return img;
 }

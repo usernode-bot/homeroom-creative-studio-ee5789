@@ -47,6 +47,21 @@
       "impact": ["public/**", "styles/**", "server.js"],
       "path": "/#/edit/new/yt-bold",
       "expectSelector": "canvas[data-editor-canvas]"
+    },
+    {
+      "name": "editor.demo-photo",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/?demo=1#/edit/demo/sunset",
+      "expectSelector": "canvas[data-editor-canvas]",
+      "expectText": "Lakeside sunset"
+    },
+    {
+      "name": "editor.demo-history",
+      "type": "visual",
+      "impact": ["public/**", "styles/**", "server.js"],
+      "path": "/?demo=1#/edit/demo/sunset",
+      "expectText": "Step 3 of 3"
     }
   ]
 }
