@@ -13,6 +13,7 @@ export function mountEditor(appHelpers) {
   A.editorApi = { addPhotoLayer };
   const routes = appHelpers.routes || (appHelpers.routes = []);
   routes.push([/^#\/edit\/(\d+)$/, (id) => openExisting(id)]);
+  routes.push([/^#\/edit\/demo\/([a-z0-9]+)$/, (key) => openDemoProject(key)]);
   routes.push([/^#\/edit\/new\/photo\/(.+)$/, (name) => openNewPhoto(decodeURIComponent(name))]);
   routes.push([/^#\/edit\/new\/tpl\/(\d+)$/, (id) => openFromTemplate(id)]);
   routes.push([/^#\/edit\/new\/(.+)$/, (rest) => openBlank(rest)]);
@@ -32,6 +33,17 @@ function blankDoc(w, h, background) {
 }
 
 // ── Entry points ─────────────────────────────────────────────────────────
+// A demo project by its fixed demo_key: a stable address that opens a sample
+// photo in the editor with no upload (staging seeds these on ?demo=1).
+async function openDemoProject(key) {
+  let list;
+  try { list = await A.api('/api/projects?demo=1'); }
+  catch { list = { projects: [] }; }
+  const p = (list.projects || []).find((x) => x.is_demo && x.demo_key === key);
+  if (!p) { A.toast('That sample could not be opened.'); location.hash = '#/'; return; }
+  openExisting(p.id);
+}
+
 async function openExisting(id) {
   let p;
   try { p = await A.api('/api/projects/' + id); }

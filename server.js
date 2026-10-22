@@ -287,7 +287,7 @@ app.get('/api/projects', async (req, res) => {
     const onlyMine = req.query.demo !== '1';
     const r = await pool.query(
       `SELECT id, name, format, width, height, thumb_url, history_index,
-              is_demo, ${RECENT_HISTORY}, updated_at
+              is_demo, demo_key, ${RECENT_HISTORY}, updated_at
        FROM projects WHERE owner_id = $1 ${onlyMine ? 'AND NOT is_demo' : ''}
        ORDER BY updated_at DESC LIMIT 100`,
       [req.user.id]);
